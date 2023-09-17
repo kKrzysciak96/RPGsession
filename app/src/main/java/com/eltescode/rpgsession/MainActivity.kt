@@ -8,10 +8,20 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.eltescode.rpgsession.ui.theme.RPGSessionTheme
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.lifecycleScope
+import com.eltescode.rpgsession.core.ui.theme.RPGSessionTheme
+import com.eltescode.rpgsession.features.proffesion.presentation.ProfessionViewModel
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,22 +32,18 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    Greeting("Android")
+                    val viewModel = hiltViewModel<ProfessionViewModel>()
+                    val text = remember { mutableStateOf("") }
+                    LaunchedEffect(key1 = Unit,
+                        block = {
+                            text.value = "Your profession is: ${
+                                lifecycleScope.async { viewModel.get() }.await()
+                            }"
+                        })
+                    Text(text = text.value)
                 }
             }
         }
     }
 }
 
-@Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    RPGSessionTheme {
-        Greeting("Android")
-    }
-}

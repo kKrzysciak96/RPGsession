@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "432204142346",
+    "project_id": "warhammer-42234",
+    "storage_bucket": "warhammer-42234.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:432204142346:android:ac3bbeae468b82cb9e8cf3",
+        "android_client_info": {
+          "package_name": "com.eltescode.rpgsession"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRJN4LnGC6y5jYaK9lUR_fqpuPtyTJinY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

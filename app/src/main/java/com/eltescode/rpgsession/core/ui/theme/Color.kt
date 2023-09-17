@@ -1,4 +1,4 @@
-package com.eltescode.rpgsession.ui.theme
+package com.eltescode.rpgsession.core.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
