@@ -1,5 +1,7 @@
 package com.eltescode.rpgsession.core.di
 
+import android.content.Context
+import androidx.work.WorkManager
 import com.eltescode.rpgsession.features.career.data.data_source.remote.CloudStore
 import com.eltescode.rpgsession.features.career.data.data_source.remote.CloudStoreImpl
 import com.eltescode.rpgsession.features.career.data.repository.CareerRepositoryImpl
@@ -20,6 +22,7 @@ import com.google.firebase.storage.ktx.storage
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
@@ -87,6 +90,12 @@ object AppModule {
             editUserPersonalDataUseCase = EditUserPersonalDataUseCase(repository),
             uploadUserPhotoUseCase = UploadUserPhotoUseCase(repository)
         )
+    }
+
+    @Provides
+    @Singleton
+    fun provideWorkManager(@ApplicationContext appContext: Context): WorkManager {
+        return WorkManager.getInstance(appContext)
     }
 
 }

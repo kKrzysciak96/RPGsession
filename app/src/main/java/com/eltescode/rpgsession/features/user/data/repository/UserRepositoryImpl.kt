@@ -8,7 +8,6 @@ import com.eltescode.rpgsession.features.user.domain.repository.UserRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
-import com.google.firebase.storage.UploadTask.TaskSnapshot
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -23,7 +22,8 @@ class UserRepositoryImpl(
     private val auth: FirebaseAuth,
     private val storage: FirebaseStorage
 ) : UserRepository {
-    private val scope = CoroutineScope(Job())
+
+    private var coroutineJob: Job? = null
 
     override suspend fun getUserData(id: String): StateFlow<CustomUserDomain?> {
         val cloudResult: MutableStateFlow<CustomUserDomain?> = MutableStateFlow(null)
@@ -41,9 +41,6 @@ class UserRepositoryImpl(
         return cloudResult.asStateFlow()
     }
 
-    override fun getCurrentUser(): CustomUserDomain? {
-        return auth.currentUser?.mapToCustomUser()
-    }
 
     override suspend fun editUserPersonalData(map: Map<String, String>) {
         val userId = auth.currentUser?.uid
@@ -51,36 +48,31 @@ class UserRepositoryImpl(
             cloud.collection("users")
                 .document(userId)
                 .update(map)
-                .addOnSuccessListener {
-                    scope.cancel()
-                }
+                .addOnSuccessListener {}
                 .addOnFailureListener { }
         }
     }
 
-    override suspend fun uploadUserPhoto(bytes: ByteArray) {
+    override suspend fun uploadUserPhoto(bytes: ByteArray): String? {
         val userId = auth.currentUser?.uid
-        userId?.let {
-            storage.getReference("users")
-                .child(it)
-                .putBytes(bytes)
-                .addOnCompleteListener {}
-                .addOnSuccessListener { result ->
-                    updateUserPhotoUrlRecord(result)
-                }
-                .addOnFailureListener { }
+        return try {
+            userId?.let {
+                storage.getReference("users")
+                    .child(it)
+                    .putBytes(bytes)
+                    .await().storage.downloadUrl.await()
+            }.toString().also {
+                Log.d("NIEROZUMIEM", "updateUserPhotoInfo_also")
+                coroutineJob = CoroutineScope(Job()).launch { updateUserPhotoInfo(it) }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
-
     }
 
-    override fun createNewUser(user: CustomUserDomain) {
-        cloud.collection("users")
-            .document(user.uid)
-            .set(user)
-    }
 
     override suspend fun signIn(credentials: EmailCredentials): CustomUserDomain? {
-
         return try {
             auth.signInWithEmailAndPassword(credentials.email, credentials.password)
                 .await().user?.mapToCustomUser()
@@ -93,7 +85,7 @@ class UserRepositoryImpl(
     override suspend fun signUp(credentials: EmailCredentials): CustomUserDomain? {
         return try {
             auth.createUserWithEmailAndPassword(credentials.email, credentials.password)
-                .await().user?.mapToCustomUser()
+                .await().user?.mapToCustomUser()?.also { createNewUser(it) }
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -104,10 +96,31 @@ class UserRepositoryImpl(
         auth.signOut()
     }
 
-    private fun updateUserPhotoUrlRecord(result: TaskSnapshot) {
-        result.storage.downloadUrl.addOnSuccessListener { uri ->
-            val dataToUpdate = mapOf("photo" to uri.toString())
-            scope.launch { editUserPersonalData(dataToUpdate) }
+    override fun createNewUser(user: CustomUserDomain) {
+        Log.d("REGISTRATION", "${user.uid}")
+        cloud.collection("users")
+            .document(user.uid)
+            .set(user)
+    }
+
+    override fun getCurrentUser(): CustomUserDomain? {
+        return auth.currentUser?.mapToCustomUser()
+    }
+
+
+    private fun updateUserPhotoInfo(newPhotoUri: String) {
+        Log.d("NIEROZUMIEM", "updateUserPhotoInfo")
+        val userId = auth.currentUser?.uid
+        userId?.let {
+            cloud.collection("users")
+                .document(userId)
+                .update(mapOf("photo" to newPhotoUri))
+                .addOnSuccessListener {
+                    Log.d("NIEROZUMIEM", "updateUserPhotoInfo_success")
+                    coroutineJob = null
+
+                }
+                .addOnFailureListener { Log.d("NIEROZUMIEM", "updateUserPhotoInfo_failure") }
         }
     }
 }

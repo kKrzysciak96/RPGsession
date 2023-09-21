@@ -12,5 +12,5 @@ interface UserRepository {
     suspend fun signOut()
     fun getCurrentUser(): CustomUserDomain?
     suspend fun editUserPersonalData(map: Map<String, String>)
-    suspend fun uploadUserPhoto(bytes: ByteArray)
+    suspend fun uploadUserPhoto(bytes: ByteArray): String?
 }

@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import androidx.work.WorkManager
 import com.eltescode.rpgsession.core.ui.theme.RPGSessionTheme
 import com.eltescode.rpgsession.features.career.presentation.CareerScreen
 import com.eltescode.rpgsession.features.user.presentation.auth.sign_in.SignInScreen
@@ -18,14 +19,18 @@ import com.eltescode.rpgsession.features.user.presentation.auth.sign_up.SignUpSc
 import com.eltescode.rpgsession.features.user.presentation.profile.book.BookScreen
 import com.eltescode.rpgsession.features.user.presentation.profile.user.profile.UserProfileScreen
 import com.eltescode.rpgsession.features.user.presentation.utils.Screens
-import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var workManager: WorkManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             RPGSessionTheme {
                 Surface(
@@ -56,6 +61,7 @@ class MainActivity : ComponentActivity() {
                         ) {
                             composable(route = Screens.UserProfileScreen.route) {
                                 UserProfileScreen(
+                                    workManager = workManager,
                                     navController = navController
                                 )
                             }
@@ -71,5 +77,25 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+//    override fun onResume() {
+//        super.onResume()
+//        val uri = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+//            intent?.getParcelableArrayExtra(Intent.EXTRA_STREAM, Uri::class.java)
+//        }else {
+//            intent.getParcelableArrayExtra(Intent.EXTRA_STREAM)
+//        } ?: return
+//
+//        val request = OneTimeWorkRequestBuilder<PhotoCompressionWorker>()
+//            .setInputData(
+//                workDataOf(
+//                    PhotoCompressionWorker.KEY_PHOTO_TO_COMPRESS_URI to uri,
+//                    PhotoCompressionWorker.KEY_PHOTO_COMPRESSION_THRESHOLD to 1024 * 20L
+//                )
+//            )
+//            .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
+//            .build()
+//        workManager.enqueue(request)
+//    }
 }
 

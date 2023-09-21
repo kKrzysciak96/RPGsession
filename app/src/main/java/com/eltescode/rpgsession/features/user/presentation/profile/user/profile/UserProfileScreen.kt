@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,12 +32,15 @@ import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.work.*
 import coil.compose.AsyncImage
 import com.eltescode.rpgsession.R
 import com.eltescode.rpgsession.core.composable.CustomText
 import com.eltescode.rpgsession.core.ui.theme.DarkBrown
+import com.eltescode.rpgsession.features.user.PhotoCompressionWorker
 import com.eltescode.rpgsession.features.user.presentation.model.CustomUserDisplayable
 import com.eltescode.rpgsession.features.user.presentation.utils.Screens
 import com.eltescode.rpgsession.features.user.presentation.utils.UserEvent
@@ -44,11 +48,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.File
 
+
 @Composable
 fun UserProfileScreen(
+    workManager: WorkManager,
     navController: NavController,
     viewModel: UserProfileViewModel = hiltViewModel()
 ) {
+
+
     val scope = rememberCoroutineScope()
     val userData = viewModel.userData.value
     val imageBrush =
@@ -61,19 +69,42 @@ fun UserProfileScreen(
     val isSettingsDialogVisible = remember { mutableStateOf(false) }
     val photoName = remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
+    val workResult = viewModel.workId?.let { id ->
+        workManager.getWorkInfoByIdLiveData(id).observeAsState().value
+    }
+
     val takePhotoContract = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture(),
         onResult = { isPhotoTaken ->
             if (isPhotoTaken) {
                 val photoFile = photoName.value?.let { File(context.filesDir, it) }
                 if (photoFile != null) {
-                    val photoByte = photoFile.readBytes()
-                    viewModel.onEvent(UserEvent.UpdatePhoto(photoByte))
-                    userData?.uid?.let { viewModel.onEvent(UserEvent.GetUserData(it)) }
+                    val request = OneTimeWorkRequestBuilder<PhotoCompressionWorker>()
+                        .setInputData(
+                            workDataOf(
+                                PhotoCompressionWorker.KEY_PHOTO_TO_COMPRESS_URI to photoFile.toUri()
+                                    .toString(),
+                                PhotoCompressionWorker.KEY_PHOTO_COMPRESSION_THRESHOLD to 1024 * 200L
+                            )
+                        )
+                        .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
+                        .build()
+                    viewModel.updateWorkId(request.id)
+                    workManager.enqueue(request)
                 }
             }
         }
     )
+    LaunchedEffect(key1 = workResult?.outputData, block = {
+        if (workResult?.outputData != null) {
+            val filePAth = workResult.outputData.getString(PhotoCompressionWorker.KEY_RESULT_PATH)
+            filePAth?.let {
+                val bytes = File(filePAth).readBytes()
+                viewModel.onEvent(UserEvent.UpdatePhoto(bytes))
+                viewModel.updateWorkId(null)
+            }
+        }
+    })
 
     LaunchedEffect(key1 = currentUser, block = {
         currentUser?.uid?.let {
@@ -100,7 +131,6 @@ fun UserProfileScreen(
         userSurname = userSurname,
         photoName = photoName,
         takePhotoContract = takePhotoContract
-
     )
 }
 
@@ -122,7 +152,6 @@ fun UserProfileScreen(
 ) {
 
     Scaffold(
-
         content = {
             Box(
                 modifier = Modifier
@@ -130,7 +159,6 @@ fun UserProfileScreen(
                     .background(imageBrush),
                 contentAlignment = Alignment.TopCenter
             ) {
-
                 SignOutIcon(
                     contentDescription = null,
                     modifier = Modifier.align(Alignment.TopEnd)
