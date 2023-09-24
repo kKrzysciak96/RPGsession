@@ -7,6 +7,6 @@ sealed class UserEvent() {
     class UpdateUserData(val dataToUpdate: Map<String, String>) : UserEvent()
     data class GetUserData(val id: String) : UserEvent()
     data class SignInWithEmail(val credentials: EmailCredentials) : UserEvent()
-    class SignOut() : UserEvent()
+    class SignOut : UserEvent()
     data class SignUpWithEmail(val credentials: EmailCredentials) : UserEvent()
 }

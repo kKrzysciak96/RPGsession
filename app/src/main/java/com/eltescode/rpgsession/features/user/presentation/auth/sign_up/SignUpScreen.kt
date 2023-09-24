@@ -46,29 +46,27 @@ fun SignUpScreen(
             }
         }
     })
+
     val imageBrush =
         ShaderBrush(ImageShader(ImageBitmap.imageResource(id = R.drawable.background_1)))
+
     SignUpScreen(
-        navController = navController,
         onEvent = viewModel::onEvent,
         email = email,
         password = password,
         repeatedPassword = repeatedPassword,
         isPasswordVisible = isPasswordVisible,
-        scope = scope,
         imageBrush = imageBrush
     )
 }
 
 @Composable
 fun SignUpScreen(
-    navController: NavController,
     onEvent: (UserEvent) -> Unit,
     email: MutableState<String>,
     password: MutableState<String>,
     repeatedPassword: MutableState<String>,
     isPasswordVisible: MutableState<Boolean>,
-    scope: CoroutineScope,
     imageBrush: ShaderBrush
 ) {
 
@@ -78,7 +76,6 @@ fun SignUpScreen(
             .background(imageBrush),
         contentAlignment = Alignment.Center
     ) {
-
         Card(
             modifier = Modifier
                 .wrapContentWidth()

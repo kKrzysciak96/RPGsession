@@ -15,6 +15,7 @@ import javax.inject.Inject
 class SignUpWithEmailViewModel @Inject constructor(
     private val userUseCases: UserUseCases
 ) : ViewModel() {
+
     private val _currentUser = mutableStateOf<CustomUserDisplayable?>(null)
     val currentUser: State<CustomUserDisplayable?> = _currentUser
 
@@ -26,6 +27,4 @@ class SignUpWithEmailViewModel @Inject constructor(
             }
         }
     }
-
-
 }

@@ -13,7 +13,10 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.work.WorkManager
 import com.eltescode.rpgsession.core.ui.theme.RPGSessionTheme
-import com.eltescode.rpgsession.features.career.presentation.CareerScreen
+import com.eltescode.rpgsession.features.admin_user.presentation.screens.profession_screen.ProfessionCreatorScreen
+import com.eltescode.rpgsession.features.admin_user.presentation.screens.skill_screen.SkillCreatorScreen
+import com.eltescode.rpgsession.features.admin_user.presentation.utils.AdminScreens
+import com.eltescode.rpgsession.features.profession.presentation.CareerScreen
 import com.eltescode.rpgsession.features.user.presentation.auth.sign_in.SignInScreen
 import com.eltescode.rpgsession.features.user.presentation.auth.sign_up.SignUpScreen
 import com.eltescode.rpgsession.features.user.presentation.profile.book.BookScreen
@@ -51,13 +54,14 @@ class MainActivity : ComponentActivity() {
                             }
 
                             composable(Screens.SignUpScreen.route) {
-
                                 SignUpScreen(navController = navController)
                             }
                         }
+
                         navigation(
                             route = Screens.NavigationUser.route,
-                            startDestination = Screens.UserProfileScreen.route
+//                            startDestination = Screens.UserProfileScreen.route
+                            startDestination = AdminScreens.ProfessionCreatorScreen.route //admin
                         ) {
                             composable(route = Screens.UserProfileScreen.route) {
                                 UserProfileScreen(
@@ -70,6 +74,12 @@ class MainActivity : ComponentActivity() {
                             }
                             composable(route = Screens.BookScreen.route) {
                                 BookScreen()
+                            }
+                            composable(route = AdminScreens.SkillCreatorScreen.route) {
+                                SkillCreatorScreen()
+                            }
+                            composable(route = AdminScreens.ProfessionCreatorScreen.route) {
+                                ProfessionCreatorScreen()
                             }
                         }
                     }

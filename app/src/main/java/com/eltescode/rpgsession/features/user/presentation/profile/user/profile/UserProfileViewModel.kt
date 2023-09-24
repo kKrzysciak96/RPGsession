@@ -1,7 +1,5 @@
 package com.eltescode.rpgsession.features.user.presentation.profile.user.profile
 
-import android.graphics.Bitmap
-import android.net.Uri
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,23 +19,17 @@ import javax.inject.Inject
 @HiltViewModel
 class UserProfileViewModel @Inject constructor(private val userUseCases: UserUseCases) :
     ViewModel() {
+
     private val _userData = mutableStateOf<CustomUserDisplayable?>(null)
     val userData: State<CustomUserDisplayable?> = _userData
-    private var getUserDataJob: Job? = null
 
-    var uncompressedUri: Uri? by mutableStateOf(null)
-        private set
-    var compressedBitmap: Bitmap? by mutableStateOf(null)
-        private set
     var workId: UUID? by mutableStateOf(null)
         private set
 
-    fun updateUncompressedUri(uri: Uri?) {
-        uncompressedUri = uri
-    }
+    private var getUserDataJob: Job? = null
 
-    fun updateCompressedBitmap(bitmap: Bitmap?) {
-        compressedBitmap = bitmap
+    init {
+        getCurrentUser()?.uid?.let { getUserData(it) }
     }
 
     fun updateWorkId(uuid: UUID?) {
@@ -53,7 +45,10 @@ class UserProfileViewModel @Inject constructor(private val userUseCases: UserUse
                 uploadUserPhoto(event.byteArray)
             }
             is UserEvent.UpdateUserData -> {
-                editUserPersonalData(event.dataToUpdate)
+                event.dataToUpdate.let {
+                    editUserPersonalData(it)
+                    updateUserDataState(it)
+                }
             }
             is UserEvent.SignOut -> {
                 signOut()
@@ -62,7 +57,7 @@ class UserProfileViewModel @Inject constructor(private val userUseCases: UserUse
         }
     }
 
-    fun getCurrentUser(): CustomUserDisplayable? {
+    private fun getCurrentUser(): CustomUserDisplayable? {
         return userUseCases.getCurrentUserUseCase()?.let { CustomUserDisplayable(it) }
     }
 
@@ -87,14 +82,15 @@ class UserProfileViewModel @Inject constructor(private val userUseCases: UserUse
         }
     }
 
-
-    private fun signOut() {
-        viewModelScope.launch { userUseCases.signOutUseCase() }
-    }
-
     private fun updateUserDataState(newPhoto: String) {
         _userData.value = userData.value?.copy(photo = newPhoto)
     }
 
+    private fun updateUserDataState(map: Map<String, String>) {
+        _userData.value = userData.value?.copy(name = map["name"], surname = map["surname"])
+    }
 
+    private fun signOut() {
+        viewModelScope.launch { userUseCases.signOutUseCase() }
+    }
 }

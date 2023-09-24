@@ -71,7 +71,6 @@ class UserRepositoryImpl(
         }
     }
 
-
     override suspend fun signIn(credentials: EmailCredentials): CustomUserDomain? {
         return try {
             auth.signInWithEmailAndPassword(credentials.email, credentials.password)
@@ -106,7 +105,6 @@ class UserRepositoryImpl(
     override fun getCurrentUser(): CustomUserDomain? {
         return auth.currentUser?.mapToCustomUser()
     }
-
 
     private fun updateUserPhotoInfo(newPhotoUri: String) {
         Log.d("NIEROZUMIEM", "updateUserPhotoInfo")

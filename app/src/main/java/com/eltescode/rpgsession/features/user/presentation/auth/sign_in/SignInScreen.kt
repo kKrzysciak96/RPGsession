@@ -41,7 +41,6 @@ fun SignInScreen(
     val email = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
     val isPasswordVisible = remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
     val currentUser = viewModel.currentUser.value
     val context = LocalContext.current
 
@@ -68,7 +67,6 @@ fun SignInScreen(
 
 @Composable
 fun SignInScreen(
-
     navController: NavController,
     onEvent: (UserEvent) -> Unit,
     email: MutableState<String>,

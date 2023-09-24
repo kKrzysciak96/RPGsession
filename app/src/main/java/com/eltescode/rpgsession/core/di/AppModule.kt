@@ -2,10 +2,10 @@ package com.eltescode.rpgsession.core.di
 
 import android.content.Context
 import androidx.work.WorkManager
-import com.eltescode.rpgsession.features.career.data.data_source.remote.CloudStore
-import com.eltescode.rpgsession.features.career.data.data_source.remote.CloudStoreImpl
-import com.eltescode.rpgsession.features.career.data.repository.CareerRepositoryImpl
-import com.eltescode.rpgsession.features.career.domain.repository.CareerRepository
+import com.eltescode.rpgsession.features.profession.data.data_source.remote.CloudStore
+import com.eltescode.rpgsession.features.profession.data.data_source.remote.CloudStoreImpl
+import com.eltescode.rpgsession.features.profession.data.repository.ProfessionRepositoryImpl
+import com.eltescode.rpgsession.features.profession.domain.repository.ProfessionRepository
 import com.eltescode.rpgsession.features.user.data.repository.UserRepositoryImpl
 import com.eltescode.rpgsession.features.user.data.utils.EmailCredentials
 import com.eltescode.rpgsession.features.user.domain.repository.UserRepository
@@ -63,8 +63,8 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideCareerRepository(cloud: CloudStore): CareerRepository {
-        return CareerRepositoryImpl(cloud)
+    fun provideCareerRepository(cloud: CloudStore): ProfessionRepository {
+        return ProfessionRepositoryImpl(cloud)
     }
 
     @Provides
@@ -97,5 +97,4 @@ object AppModule {
     fun provideWorkManager(@ApplicationContext appContext: Context): WorkManager {
         return WorkManager.getInstance(appContext)
     }
-
 }

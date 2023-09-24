@@ -5,28 +5,21 @@ import android.net.Uri
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Icon
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Book
-import androidx.compose.material.icons.filled.Logout
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.*
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.ImageShader
+import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.dp
@@ -36,12 +29,10 @@ import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.work.*
-import coil.compose.AsyncImage
 import com.eltescode.rpgsession.R
-import com.eltescode.rpgsession.core.composable.CustomText
-import com.eltescode.rpgsession.core.ui.theme.DarkBrown
-import com.eltescode.rpgsession.features.user.PhotoCompressionWorker
 import com.eltescode.rpgsession.features.user.presentation.model.CustomUserDisplayable
+import com.eltescode.rpgsession.features.user.presentation.profile.user.profile.components.*
+import com.eltescode.rpgsession.features.user.presentation.utils.PhotoCompressionWorker
 import com.eltescode.rpgsession.features.user.presentation.utils.Screens
 import com.eltescode.rpgsession.features.user.presentation.utils.UserEvent
 import kotlinx.coroutines.CoroutineScope
@@ -55,15 +46,12 @@ fun UserProfileScreen(
     navController: NavController,
     viewModel: UserProfileViewModel = hiltViewModel()
 ) {
-
-
     val scope = rememberCoroutineScope()
     val userData = viewModel.userData.value
     val imageBrush =
         ShaderBrush(ImageShader(ImageBitmap.imageResource(id = R.drawable.background_1)))
     val bottomBarBrush =
         ShaderBrush(ImageShader(ImageBitmap.imageResource(id = R.drawable.background_1)))
-    val currentUser = remember { viewModel.getCurrentUser() }
     val userName = remember { mutableStateOf("") }
     val userSurname = remember { mutableStateOf("") }
     val isSettingsDialogVisible = remember { mutableStateOf(false) }
@@ -106,11 +94,6 @@ fun UserProfileScreen(
         }
     })
 
-    LaunchedEffect(key1 = currentUser, block = {
-        currentUser?.uid?.let {
-            viewModel.onEvent(UserEvent.GetUserData(it))
-        }
-    })
     LaunchedEffect(key1 = userData, block = {
         userData?.let { user ->
             userName.value = user.name ?: ""
@@ -150,7 +133,16 @@ fun UserProfileScreen(
     photoName: MutableState<String?>,
     takePhotoContract: ManagedActivityResultLauncher<Uri, Boolean>
 ) {
-
+    val list = remember {
+        listOf(
+            "Your Sheets",
+            "Favourite Careers",
+            "Favourite Magic",
+            "Notes",
+            "Career Creator",
+            "Cosik"
+        )
+    }
     Scaffold(
         content = {
             Box(
@@ -178,11 +170,10 @@ fun UserProfileScreen(
                 ) {
                     isSettingsDialogVisible.value = !isSettingsDialogVisible.value
                 }
-
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(top = 32.dp, bottom = 16.dp, start = 16.dp, end = 16.dp),
+                        .padding(top = 32.dp, bottom = 16.dp, start = 8.dp, end = 8.dp),
                     verticalArrangement = Arrangement.Top,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -202,7 +193,25 @@ fun UserProfileScreen(
                             takePhotoContract.launch(photoUri)
                         }
                     )
-                    Text(text = userData.toString())
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(top = 16.dp, bottom = 35.dp, start = 8.dp, end = 8.dp),
+                        verticalArrangement = Arrangement.SpaceBetween,
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+
+                        items(list) { title ->
+                            BaseCard(
+                                text = title,
+                                modifier = Modifier
+                                    .size(175.dp)
+                                    .padding(bottom = 12.dp),
+                                fontSize = 18.sp
+                            )
+                        }
+                    }
                 }
 
                 if (isSettingsDialogVisible.value) {
@@ -214,14 +223,11 @@ fun UserProfileScreen(
                             val dataToUpdate =
                                 mapOf("name" to userName.value, "surname" to userSurname.value)
                             onEvent(UserEvent.UpdateUserData(dataToUpdate))
-                            userData?.uid?.let { id -> onEvent(UserEvent.GetUserData(id)) }
                         },
                         onDialogDismiss = {
                             isSettingsDialogVisible.value = !isSettingsDialogVisible.value
                         })
                 }
-
-
             }
             it
         },
@@ -234,122 +240,12 @@ fun UserProfileScreen(
                 backgroundBrush = bottomBarBrush
             )
         },
+
         modifier = Modifier.fillMaxSize()
     )
 }
 
-@Composable
-fun SignOutIcon(contentDescription: String?, modifier: Modifier, onClickIcon: () -> Unit) {
-    Icon(
-        imageVector = Icons.Default.Logout,
-        contentDescription = contentDescription,
-        modifier = modifier
-            .padding(16.dp)
-            .clickable { onClickIcon() }
-    )
-}
 
-@Composable
-fun SettingsIcon(contentDescription: String?, modifier: Modifier, onClickIcon: () -> Unit) {
-    Icon(
-        imageVector = Icons.Default.Settings,
-        contentDescription = contentDescription,
-        modifier = modifier
-            .padding(16.dp)
-            .clickable { onClickIcon() }
-    )
-}
 
-@Composable
-fun UserPicture(userPhoto: String, userName: String, userSurname: String, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
-    ) {
-        Box(
-            modifier = Modifier
-                .size(200.dp)
-                .clip(RoundedCornerShape(70.dp))
-                .background(Color.LightGray),
-            contentAlignment = Alignment.Center
-        ) {
-            AsyncImage(
-                model = userPhoto,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clickable {
-                        onClick()
-                    }
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black), startY = 450F
-                        )
-                    )
-                    .border(BorderStroke(5.dp, color = Color.Black), RoundedCornerShape(70.dp))
 
-            )
-            CustomText(
-                text = "$userName $userSurname".trim(),
-                fontSize = 16.sp,
-                color = Color.White,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 16.dp)
-            )
-        }
-    }
-}
-
-@Composable
-fun CustomBottomAppBar(
-    modifier: Modifier = Modifier,
-    backgroundBrush: ShaderBrush,
-    contentColor: Color
-) {
-    Box(
-        modifier = modifier.background(DarkBrown),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Box(
-                modifier = Modifier
-                    .weight(1F)
-                    .fillMaxSize()
-                    .background(backgroundBrush)
-                    .clickable { },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = null,
-                    tint = contentColor
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .weight(1F)
-                    .fillMaxSize()
-                    .background(backgroundBrush)
-                    .clickable { },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Book,
-                    contentDescription = null,
-                    tint = contentColor
-                )
-            }
-        }
-    }
-}
 
